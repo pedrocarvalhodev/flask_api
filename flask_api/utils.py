@@ -13,10 +13,12 @@ from sklearn.pipeline import make_pipeline
 import warnings
 warnings.filterwarnings("ignore")
 
+path="/home/pedro/repos/ml_web_api/flask_api"
+
 
 def build_and_train():
 
-	data = pd.read_csv('../data/training.csv')
+	data = pd.read_csv(path+'/data/training.csv')
 	data = data.dropna(subset=['Gender', 'Married', 'Credit_History', 'LoanAmount'])
 
 	pred_var = ['Gender','Married','Dependents','Education','Self_Employed','ApplicantIncome','CoapplicantIncome',\
@@ -92,5 +94,5 @@ if __name__ == '__main__':
 	model = build_and_train()
 
 	filename = 'model_v1.pk'
-	with open('../flask_api/models/'+filename, 'wb') as file:
+	with open(path+'/flask_api/models/'+filename, 'wb') as file:
 		pickle.dump(model, file)
