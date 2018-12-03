@@ -355,10 +355,10 @@ loaded_pickle
 # 
 # - To install `dill`
 
-# In[24]:
+# In[1]:
 
 
-get_ipython().system('pip install dill')
+#!pip install dill
 
 
 # In[25]:
