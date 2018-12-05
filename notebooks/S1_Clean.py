@@ -3,14 +3,17 @@
 
 # Steps
 # 
-# 1. `Nulls` : groupby fillna(median), most common
-# 2. `Categorize` : determine categorial variables and binnerize-get dummies or replace
-# 3. `Outliers` : Substitute outliers Pedrcentile > .99 with percentile 0.99
-# 4. `Data types` : All numeric and as matrix
-# 5. `Var importance` : rank importance and drop correlated with low importance
-# 6. `Normalize`: transform 0-100 most vars
+# 1. `Fillna` : groupby fillna(median), most common
+# 2. `Categories` : determine categorial variables and binning [50-100], get dummies or replaces
+# 3. `Text Features` : get distinct caracteristics, or replace to aggregate similar texts
+# 4. `Outliers` : Substitute outliers Pedrcentile > .99 with percentile 0.99
+# 5. `Data types` : All numeric and as matrix
+# 6. `Normalize`: transform 0-100 most vars, or scaling
+# 7. `Var importance` : rank importance and drop correlated with low importance( below random )
+# 8. `Data leakage` : Determin format to predict and evaluate models
+# 9. `Pipelines` : create process for automation raw_data -> clean -> features -> predict -> evaluate
 
-# In[16]:
+# In[1]:
 
 
 import os 
@@ -48,21 +51,21 @@ for _ in data.columns:
     print("The number of null values in:{} == {}".format(_, data[_].isnull().sum()))
 
 
-# In[8]:
+# In[6]:
 
 
 var_w_missing = [c for c in data.columns if data[c].isnull().sum() > 0]
 var_w_missing
 
 
-# In[14]:
+# In[7]:
 
 
 for _ in var_w_missing:
     print("List of unique labels for {}:::{}".format(_, list(set(data[_].dropna()))[:10]))
 
 
-# In[15]:
+# In[8]:
 
 
 # Fields with no missing data
@@ -90,7 +93,7 @@ for _ in var_w_missing:
 
 # # 2. Split into test & train
 
-# In[20]:
+# In[9]:
 
 
 X_pred_var = ['Gender','Married','Dependents','Education','Self_Employed','ApplicantIncome','CoapplicantIncome',            'LoanAmount','Loan_Amount_Term','Credit_History','Property_Area']
@@ -102,7 +105,7 @@ X_train, X_test, y_train, y_test = train_test_split(data[X_pred_var], data[y_pre
 
 # ## 2B Cleaning example
 
-# In[22]:
+# In[10]:
 
 
 X_train['Dependents'] = X_train['Dependents'].fillna('0')
@@ -119,7 +122,7 @@ X_train['LoanAmount'] = X_train['LoanAmount'].fillna(X_train['LoanAmount'].mean(
 
 # # 2C Replace keys
 
-# In[25]:
+# In[11]:
 
 
 label_columns = ['Gender', 'Married', 'Education', 'Self_Employed', 'Property_Area', 'Dependents']
@@ -128,7 +131,7 @@ for _ in label_columns:
     print("List of unique labels {}:{}".format(_, set(X_train[_])))
 
 
-# In[26]:
+# In[12]:
 
 
 gender_values = {'Female' : 0, 'Male' : 1} 
@@ -140,20 +143,20 @@ dependent_values = {'3+': 3, '0': 0, '2': 2, '1': 1}
 X_train.replace({'Gender': gender_values, 'Married': married_values, 'Education': education_values,                 'Self_Employed': employed_values, 'Property_Area': property_values, 'Dependents': dependent_values}                , inplace=True)
 
 
-# In[27]:
+# In[13]:
 
 
 X_train.head(2)
 
 
-# In[28]:
+# In[14]:
 
 
 # Check types of each fields
 X_train.dtypes
 
 
-# In[29]:
+# In[15]:
 
 
 # Check if no nulls
@@ -161,13 +164,13 @@ for _ in X_train.columns:
     print("The number of null values in:{} == {}".format(_, X_train[_].isnull().sum()))
 
 
-# In[31]:
+# In[16]:
 
 
 X_train.head(2)
 
 
-# In[32]:
+# In[17]:
 
 
 X_train.shape
@@ -175,14 +178,14 @@ X_train.shape
 
 # # 2D test -> predict data format
 
-# In[40]:
+# In[18]:
 
 
 dftest = pd.read_csv(path+'/data/test.csv', encoding="utf-8-sig")
 dftest.head(2)
 
 
-# In[37]:
+# In[19]:
 
 
 """Converting Pandas Dataframe to json
@@ -190,13 +193,13 @@ dftest.head(2)
 dftest.loc[0:1]#.to_json(orient='records')
 
 
-# In[38]:
+# In[20]:
 
 
 dftest.loc[0:1].to_json(orient='records')
 
 
-# In[39]:
+# In[21]:
 
 
 type(dftest.loc[0:1].to_json(orient='records'))
@@ -206,7 +209,7 @@ type(dftest.loc[0:1].to_json(orient='records'))
 # 
 # Get all clean methods into single method
 
-# In[41]:
+# In[22]:
 
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -255,7 +258,7 @@ class PreProcessing(BaseEstimator, TransformerMixin):
         return self
 
 
-# In[42]:
+# In[23]:
 
 
 # Make sure it works
@@ -266,57 +269,57 @@ y_pred_var = 'Loan_Status'
 X_train, X_test, y_train, y_test = train_test_split(data[X_pred_var], data[y_pred_var],                                                     test_size=0.25, random_state=42)
 
 
-# In[43]:
+# In[24]:
 
 
 X_train.head(2)
 
 
-# In[44]:
+# In[25]:
 
 
 for _ in X_train.columns:
     print("The number of null values in:{} == {}".format(_, X_train[_].isnull().sum()))
 
 
-# In[46]:
+# In[26]:
 
 
 # Declare class
 preprocess = PreProcessing()
 
 
-# In[47]:
+# In[27]:
 
 
 preprocess
 
 
-# In[48]:
+# In[28]:
 
 
 preprocess.fit(X_train)
 
 
-# In[49]:
+# In[29]:
 
 
 X_train_transformed = preprocess.transform(X_train)
 
 
-# In[50]:
+# In[30]:
 
 
 X_train_transformed.shape
 
 
-# In[53]:
+# In[31]:
 
 
 X_train_transformed[:2,:6]
 
 
-# In[54]:
+# In[32]:
 
 
 # Do same for test dataset
@@ -324,7 +327,7 @@ X_test_transformed = preprocess.transform(X_test)
 X_test_transformed.shape
 
 
-# In[56]:
+# In[33]:
 
 
 X_test_transformed[0]
@@ -332,21 +335,21 @@ X_test_transformed[0]
 
 # # 4. Format Y dataset
 
-# In[57]:
+# In[34]:
 
 
 ## Clean y dataset
 y_test.head(2)
 
 
-# In[58]:
+# In[35]:
 
 
 y_test = y_test.replace({'Y':1, 'N':0}).as_matrix()
 y_test[:4]
 
 
-# In[59]:
+# In[36]:
 
 
 y_train = y_train.replace({'Y':1, 'N':0}).as_matrix()
@@ -354,7 +357,7 @@ y_train = y_train.replace({'Y':1, 'N':0}).as_matrix()
 
 # # 5. Set ML classes : pipe and grid
 
-# In[64]:
+# In[37]:
 
 
 param_grid = {"randomforestclassifier__n_estimators" : [10, 20, 30],
@@ -366,20 +369,20 @@ from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import RandomForestClassifier
 
 pipe = make_pipeline(PreProcessing(),
-                    RandomForestClassifier())
+                     RandomForestClassifier())
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 grid = GridSearchCV(pipe, param_grid=param_grid, cv=3)
 
 
-# In[65]:
+# In[38]:
 
 
 pipe
 
 
-# In[66]:
+# In[39]:
 
 
 grid
@@ -387,7 +390,7 @@ grid
 
 # # 6 Deplot ML on data
 
-# In[67]:
+# In[40]:
 
 
 # Make sure it works
@@ -400,13 +403,13 @@ X_train, X_test, y_train, y_test = train_test_split(data[X_pred_var], data[y_pre
 grid.fit(X_train, y_train)
 
 
-# In[68]:
+# In[41]:
 
 
 print("Best parameters: {}".format(grid.best_params_))
 
 
-# In[69]:
+# In[42]:
 
 
 print("Test set score: {:.2f}".format(grid.score(X_test, y_test)))
@@ -414,7 +417,7 @@ print("Test set score: {:.2f}".format(grid.score(X_test, y_test)))
 
 # # 7. Fit
 
-# In[72]:
+# In[43]:
 
 
 # X_test is in its original format
@@ -422,7 +425,7 @@ print("Test set score: {:.2f}".format(grid.score(X_test, y_test)))
 X_test[:1]
 
 
-# In[73]:
+# In[44]:
 
 
 y_hat_predict = grid.predict(X_test)
@@ -431,19 +434,19 @@ y_hat_predict[:5]
 
 # # 8. Variable Importance
 
-# In[86]:
+# In[45]:
 
 
 y_train_b = y_train.replace({"Y": 1, "N":0})
 
 
-# In[87]:
+# In[46]:
 
 
 y_train_b[:5]
 
 
-# In[89]:
+# In[47]:
 
 
 ## X clean
@@ -467,13 +470,26 @@ dependent_values = {'3+': 3, '0': 0, '2': 2, '1': 1}
 X_train.replace({'Gender': gender_values, 'Married': married_values, 'Education': education_values,                 'Self_Employed': employed_values, 'Property_Area': property_values, 'Dependents': dependent_values}                , inplace=True)
 
 
-# In[90]:
+# In[69]:
 
 
 X_train.head(2)
 
 
-# In[105]:
+# In[70]:
+
+
+X_train['randNumCol_1'] = np.random.randint(1, 6, X_train.shape[0])
+X_train['randNumCol_2'] = np.random.randint(10, 16, X_train.shape[0])
+
+
+# In[71]:
+
+
+X_train.head(2)
+
+
+# In[72]:
 
 
 #import numpy as np
@@ -504,19 +520,51 @@ for f, col in enumerate(X_train.columns):
 print(range(X_train.shape[1]), importances[indices])
 
 
-# In[101]:
+# ## New Variable Importance
+
+# In[73]:
+
+
+from sklearn.ensemble import RandomForestClassifier
+clf = RandomForestClassifier(n_estimators=50, max_features='sqrt')
+clf = clf.fit(X_train, y_train_b)
+
+
+# In[74]:
+
+
+features = pd.DataFrame()
+features['feature'] = X_train.columns
+features['importance'] = clf.feature_importances_
+features.sort_values(by=['importance'], ascending=True, inplace=True)
+features.set_index('feature', inplace=True)
+
+
+# In[75]:
+
+
+features.sort_values(by="importance", ascending=False)
+
+
+# In[68]:
+
+
+X_train.shape
+
+
+# In[51]:
 
 
 X_train.head(2)
 
 
-# In[96]:
+# In[52]:
 
 
 X_train.columns
 
 
-# In[104]:
+# In[53]:
 
 
 X_train.columns[indices][0]
@@ -524,7 +572,7 @@ X_train.columns[indices][0]
 
 # # 8B Correlation Matrix
 
-# In[114]:
+# In[54]:
 
 
 X_train.corr()[(X_train.corr()>0.4) | (X_train.corr() < -0.4)]
@@ -532,7 +580,7 @@ X_train.corr()[(X_train.corr()>0.4) | (X_train.corr() < -0.4)]
 
 # # 9. Save Pickel Model
 
-# In[115]:
+# In[55]:
 
 
 import dill as pickle
@@ -540,7 +588,7 @@ import dill as pickle
 filename = 'model_v2.pk'
 
 
-# In[116]:
+# In[56]:
 
 
 # 1. Save model
@@ -548,7 +596,7 @@ with open(path+'/flask_api/models/'+filename, 'wb') as file:
     pickle.dump(grid, file)
 
 
-# In[117]:
+# In[57]:
 
 
 # 2. Read model
@@ -556,7 +604,7 @@ with open(path+'/flask_api/models/'+filename ,'rb') as f:
     loaded_model = pickle.load(f)
 
 
-# In[120]:
+# In[58]:
 
 
 # 3. Test model
