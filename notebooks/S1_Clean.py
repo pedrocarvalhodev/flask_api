@@ -3,15 +3,16 @@
 
 # Steps
 # 
-# 0. `Fields & Objetives Spreadsheet` : create spreadsheet detailing each field, problem and opoortunity, work steps 
-# 0. `Fields relationship` : Document each field relation in comparison with target field
-# 1. `Fillna` : groupby fillna(median), most common
+# 0. `Fields & Objetives Spreadsheet` : create spreadsheet detailing each field (example business meaning), problem and opoortunity, work steps 
+# 0. `Fields relationship` : Document each field relation in comparison with target field (linear, corr, ..)
+# 1. `Fillna` : Check isnull(), "None", NA, NaN, & groupby fillna(median), by main groups (sex, age bracket, city)
 # 2. `Categories` : determine categorial variables and binning [50-100], get dummies or replaces
 # 3. `Text Features` : get distinct caracteristics, or replace to aggregate similar texts
 # 4. `Outliers` : Substitute outliers Pedrcentile > .99 with percentile 0.99
 # 5. `Data types` : All numeric and as matrix
 # 6. `Normalize`: transform 0-100 most vars, or scaling
-# 7. `Var importance` : rank importance and drop correlated with low importance( below random )
+# 7. `Var importance` : rank importance and drop correlated with low importance( below random ). Compare with OLS predict accuracy
+# 7. `Feature Eng` : How many features can we create with above random baseline? Sum top 5 as target
 # 8. `Data leakage` : Determin format to predict and evaluate models
 # 9. `Pipelines` : create process for automation raw_data -> clean -> features -> predict -> evaluate
 # 10. `Review Best practices` : first impressions matters, consistency, descripiton and communication, explanation
