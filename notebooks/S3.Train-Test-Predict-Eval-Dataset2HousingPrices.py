@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[62]:
+# In[1]:
 
 
 import itertools
@@ -14,79 +14,84 @@ from math import sqrt
 from sklearn.ensemble import RandomForestClassifier
 
 
-# In[2]:
+# In[21]:
 
 
-df = pd.read_csv("https://gist.githubusercontent.com/seankross/a412dfbd88b3db70b74b/raw/5f23f993cd87c283ce766e7ac6b329ee7cc2e1d1/mtcars.csv")
+df = pd.read_csv("https://raw.githubusercontent.com/mohitgupta-omg/Kaggle-California-Housing-Prices/master/Data/housing.csv")
+df = df.sample(frac=0.2)
+df.shape
 
 
-# In[3]:
+# In[22]:
+
+
+df = df.dropna(axis=0)
+df.drop(["longitude", "latitude"], axis = 1, inplace=True)
+
+
+# In[23]:
+
+
+df.groupby("ocean_proximity").median_house_value.count()
+
+
+# In[24]:
+
+
+print(df.shape)
+df = df.merge(pd.get_dummies(df.ocean_proximity, drop_first=True, prefix="OCEAN_PROX"), 
+              left_index=True, right_index=True, how="inner")
+df.drop("ocean_proximity", axis = 1, inplace=True)
+print(df.shape)
+
+
+# In[25]:
 
 
 df.head(2)
 
 
-# In[4]:
+# In[26]:
 
 
-df.drop("model", axis=1, inplace=True)
+#df.info()
 
 
-# In[5]:
+# In[27]:
 
 
-#pd.get_dummies(df.mod
-df.head(2)
+#df.columns
 
 
-# In[6]:
+# In[28]:
 
 
-df.info()
-
-
-# In[7]:
-
-
-df.columns
-
-
-# In[8]:
-
-
-print(df.nunique())
-print(df.groupby("cyl").mpg.count())
-
-
-# In[9]:
-
-
-y = "hp"
+y = "median_house_value"
 X = [x for x in df.columns if x != y]
 
-X_train, X_test, y_train, y_test = train_test_split(df[X], df[y], test_size=0.30, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(df[X], df[y], test_size=0.20, random_state=42)
 print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
 
 
-# In[10]:
+# In[29]:
 
 
 reg = LinearRegression(fit_intercept=True).fit(X_train, y_train)
 y_pred = reg.predict(X_test)
 yh  = [x for x in zip(y_test, y_pred)]
-print(yh)
+#print(yh)
 rootMeanSquaredError = sqrt(mean_squared_error(y_test, y_pred))
-print(rootMeanSquaredError)
+print("RMSE All: ", rootMeanSquaredError)
 
 
 # ## Variable Importance
 
-# In[11]:
+# In[30]:
 
 
 clf = RandomForestClassifier(n_estimators=50, max_features='sqrt')
 df_X = df[X].copy()
-df_X['randomVar'] = np.random.randint(1, 6, df_X.shape[0])
+df_X['randomVar'] = np.random.randint(1, 10, df_X.shape[0])
 clf = clf.fit(df_X, df[y])
 features = pd.DataFrame()
 features['feature'] = df_X.columns
@@ -97,31 +102,31 @@ features = features.sort_values(by="importance", ascending=False).reset_index(dr
 features
 
 
-# In[12]:
+# In[31]:
 
 
 randomVarIndex = features[features.feature=="randomVar"].index.values[0]
 
 
-# In[13]:
+# In[32]:
 
 
 feat_positive = list(features[features.index < randomVarIndex].feature.values)
 feat_positive
 
 
-# In[14]:
+# In[33]:
 
 
 reg = LinearRegression(fit_intercept=True).fit(X_train[feat_positive], y_train)
 y_pred = reg.predict(X_test[feat_positive])
 yh  = [x for x in zip(y_test, map(int, y_pred))]
-print(yh)
+#print(yh)
 rootMeanSquaredError = sqrt(mean_squared_error(y_test, y_pred))
-print(rootMeanSquaredError)
+print("RMSE Better than random: ", rootMeanSquaredError)
 
 
-# In[15]:
+# In[34]:
 
 
 # Compare variable importance with predictive capacity of each var with intercept, Mean RMSE with train-test loop 
@@ -129,20 +134,20 @@ print(rootMeanSquaredError)
 
 # ## Linear regression brute force eval
 
-# In[16]:
+# In[35]:
 
 
-y = "hp"
+y = "median_house_value"
 X = [x for x in df.columns if x != y]
 
 
-# In[17]:
+# In[36]:
 
 
 X
 
 
-# In[99]:
+# In[37]:
 
 
 def split_fit_eval(df, y):
@@ -157,32 +162,43 @@ def split_fit_eval(df, y):
         if enum % 100 == 0:
             print(enum)
         rmse = []
-        df_X = df[x].copy()
-        df_X["intercept"] = 1.0
         for rs in range(10):
-            X_train, X_test, y_train, y_test = train_test_split(df_X, df[y], test_size=0.30, random_state=rs)
-            reg = LinearRegression(fit_intercept=False).fit(X_train, y_train)
+            X_train, X_test, y_train, y_test = train_test_split(df[x], df[y], test_size=0.20, random_state=rs)
+            reg = LinearRegression(fit_intercept=True).fit(X_train, y_train)
             y_pred = reg.predict(X_test)
             rmse.append(sqrt(mean_squared_error(y_test, y_pred)))
         res.append((x, np.mean(rmse)))
     res = pd.DataFrame(res, columns=["var", "rmse"])
     res = res.sort_values(by="rmse").reset_index(drop=True)
+    res["nvars"] = res["var"].apply(lambda x : len(x))
     return res
 
 
-# In[100]:
+# In[38]:
 
 
-r = split_fit_eval(df=df, y="hp")
+r = split_fit_eval(df=df, y="median_house_value")
 
 
-# In[101]:
+# In[39]:
 
 
 r.head(10)
 
 
-# In[59]:
+# In[40]:
+
+
+r["var"].loc[0]
+
+
+# In[41]:
+
+
+#r["var"].loc[0]
+
+
+# In[42]:
 
 
 features
@@ -190,12 +206,33 @@ features
 
 # ## Var Importance - Correlations
 
-# In[98]:
+# In[43]:
 
 
+y = "median_house_value"
 df_corr = df.corr()
-df_corr = df_corr["hp"]
+df_corr = df_corr[y]
 df_corr = df_corr.reset_index(drop=False)
-df_corr["hp"] = df_corr["hp"].apply(lambda x : abs(x))
-df_corr.sort_values(by="hp", ascending=False).reset_index(drop=True)
+df_corr[y] = df_corr[y].apply(lambda x : abs(x))
+df_corr.sort_values(by=y, ascending=False).reset_index(drop=True)
+
+
+# ## Remove explinatory vars with high correlations 
+
+# In[44]:
+
+
+df_corr = df.corr().reset_index(drop=False)
+df_corr
+
+
+# In[45]:
+
+
+df_corr_melt = pd.melt(df_corr, id_vars=['index'], value_vars=[col for col in df_corr.columns if col != "index" ])
+df_corr_melt["value"] = df_corr_melt["value"].apply(lambda x : abs(x))
+df_corr_melt = df_corr_melt.sort_values(by="value", ascending=False)
+df_corr_melt = df_corr_melt.loc[df_corr_melt["index"]!=df_corr_melt["variable"], :]
+df_corr_melt = df_corr_melt[df_corr_melt["value"]>0.5]
+df_corr_melt
 
